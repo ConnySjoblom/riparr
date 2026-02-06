@@ -83,20 +83,21 @@ class DiscWatcher:
 
         self._running = True
 
-        # Wrap async callbacks for sync monitors
-        def sync_on_insert(device: str) -> None:
-            anyio.from_thread.run(on_insert, device)
-
-        def sync_on_remove(device: str) -> None:
-            anyio.from_thread.run(on_remove, device)
-
         try:
             if self._selected_method == "udev":
+                # Wrap async callbacks for sync udev monitor (runs in thread)
+                def sync_on_insert(device: str) -> None:
+                    anyio.from_thread.run(on_insert, device)
+
+                def sync_on_remove(device: str) -> None:
+                    anyio.from_thread.run(on_remove, device)
+
                 monitor = UdevMonitor(self.devices)
                 await monitor.monitor(sync_on_insert, sync_on_remove, once=once)
             else:
+                # Poller is fully async, pass callbacks directly
                 poller = DevicePoller(self.devices, interval=self.poll_interval)
-                await poller.poll(sync_on_insert, sync_on_remove, once=once)
+                await poller.poll(on_insert, on_remove, once=once)
         except Exception as e:
             log.error("Disc watcher error", error=str(e))
             raise

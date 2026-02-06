@@ -5,7 +5,7 @@ access to /run/udev), this provides a polling-based alternative.
 """
 
 import os
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 import anyio
 import structlog
@@ -34,15 +34,15 @@ class DevicePoller:
 
     async def poll(
         self,
-        on_insert: Callable[[str], None],
-        on_remove: Callable[[str], None],
+        on_insert: Callable[[str], Awaitable[None]],
+        on_remove: Callable[[str], Awaitable[None]],
         once: bool = False,
     ) -> None:
         """Start polling for disc events.
 
         Args:
-            on_insert: Callback when disc is inserted
-            on_remove: Callback when disc is removed
+            on_insert: Async callback when disc is inserted
+            on_remove: Async callback when disc is removed
             once: Stop after first insert event
         """
         self._running = True
@@ -73,7 +73,7 @@ class DevicePoller:
                     # Disc inserted
                     log.debug("Disc detected (poll)", device=device)
                     self._disc_states[device] = True
-                    on_insert(device)
+                    await on_insert(device)
                     if once:
                         self._running = False
                         return
@@ -82,7 +82,7 @@ class DevicePoller:
                     # Disc removed
                     log.debug("Disc removed (poll)", device=device)
                     self._disc_states[device] = False
-                    on_remove(device)
+                    await on_remove(device)
 
     def stop(self) -> None:
         """Stop polling."""
