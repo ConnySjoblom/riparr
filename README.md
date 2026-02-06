@@ -1,5 +1,7 @@
 # Riparr
 
+> **Disclaimer:** This is a hobby/vibe-coding experiment. Not intended for serious or production use. Use at your own risk.
+
 Modern DVD/Blu-ray ripper with automated disc detection, metadata lookup, and encoding.
 
 ## Features
@@ -51,8 +53,8 @@ All settings via environment variables with `RIPARR_` prefix:
 | `RIPARR_OUTPUT_DIR` | `/data/media` | Encoded output |
 | `RIPARR_TMDB_API_KEY` | - | TMDB API key |
 | `RIPARR_VIDEO_CODEC` | `x265` | Encoder (x264/x265/nvenc) |
-| `RIPARR_VIDEO_QUALITY` | `20` | CRF value |
-| `RIPARR_HANDBRAKE_PRESET` | `Fast 1080p30` | HandBrake preset |
+| `RIPARR_VIDEO_QUALITY` | `19` | CRF value |
+| `RIPARR_HANDBRAKE_PRESET` | `HQ 576p25 Surround` | HandBrake preset |
 
 ## License
 

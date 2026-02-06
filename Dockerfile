@@ -79,15 +79,12 @@ RUN mkdir -p /data/raw /data/media /config \
 
 WORKDIR /app
 
-# Install Python dependencies
-COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e .
-
 # Copy application code
+COPY pyproject.toml ./
 COPY src/ ./src/
 
 # Install the application
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Switch to non-root user
 USER riparr
