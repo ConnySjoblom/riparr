@@ -62,8 +62,8 @@ RUN cd makemkv-bin-${MAKEMKV_VERSION} \
 # ============================================
 FROM base AS runtime
 
-# Copy MakeMKV from builder (binaries go to /usr/bin, libs to /usr/local/lib)
-COPY --from=makemkv-builder /usr/bin/makemkvcon /usr/local/bin/
+# Copy MakeMKV from builder
+COPY --from=makemkv-builder /usr/local/bin/makemkvcon /usr/local/bin/
 COPY --from=makemkv-builder /usr/local/lib/libmakemkv.so* /usr/local/lib/
 COPY --from=makemkv-builder /usr/local/lib/libdriveio.so* /usr/local/lib/
 COPY --from=makemkv-builder /usr/local/lib/libmmbd.so* /usr/local/lib/
