@@ -68,24 +68,18 @@ async def _run_watch(devices: list[str], once: bool, gui: bool) -> None:
     async def on_disc_inserted(device: str) -> None:
         """Handle disc insertion event."""
         log.info("Disc inserted", device=device)
-        if not gui:
-            console.print(f"[green]Disc inserted:[/] {device}")
-        else:
+        if gui:
             tracker.add_event(f"[green]Disc detected:[/] {device}")
 
         try:
             await queue_manager.process_disc(device)
         except Exception as e:
             log.error("Failed to process disc", device=device, error=str(e))
-            if not gui:
-                console.print(f"[red]Error processing disc:[/] {e}")
 
     async def on_disc_removed(device: str) -> None:
         """Handle disc removal event."""
         log.info("Disc removed", device=device)
-        if not gui:
-            console.print(f"[yellow]Disc removed:[/] {device}")
-        else:
+        if gui:
             tracker.add_event(f"[yellow]Disc removed:[/] {device}")
 
     if gui:
