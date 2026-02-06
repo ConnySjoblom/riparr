@@ -30,8 +30,13 @@ class UdevMonitor:
         """Check if udev monitoring is available.
 
         Returns:
-            True if pyudev can connect to udev socket
+            True if pyudev can connect to udev socket and we're not in Docker
         """
+        # Check if running in Docker - udev events don't work in containers
+        if UdevMonitor._is_docker():
+            log.debug("Running in Docker, udev events won't work")
+            return False
+
         try:
             import pyudev
 
@@ -43,6 +48,30 @@ class UdevMonitor:
         except (ImportError, OSError, Exception) as e:
             log.debug("udev not available", error=str(e))
             return False
+
+    @staticmethod
+    def _is_docker() -> bool:
+        """Check if running inside a Docker container.
+
+        Returns:
+            True if running in Docker
+        """
+        import os
+
+        # Check for .dockerenv file
+        if os.path.exists("/.dockerenv"):
+            return True
+
+        # Check cgroup for docker/container indicators
+        try:
+            with open("/proc/1/cgroup") as f:
+                content = f.read()
+                if "docker" in content or "containerd" in content or "kubepods" in content:
+                    return True
+        except (FileNotFoundError, PermissionError):
+            pass
+
+        return False
 
     async def monitor(
         self,
