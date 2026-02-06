@@ -8,7 +8,7 @@ from typing import Literal
 
 import structlog
 
-from riparr.encoder.parser import EncodeProgress, parse_progress_line
+from riparr.encoder.parser import parse_progress_line
 
 
 @dataclass
@@ -165,11 +165,11 @@ class HandBrake:
 
             return output_path
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise HandBrakeError(
                 f"HandBrakeCLI not found at '{self.executable}'. "
                 "Please install HandBrake and ensure HandBrakeCLI is in PATH."
-            )
+            ) from e
         except HandBrakeError:
             raise
         except Exception as e:
@@ -263,5 +263,5 @@ class HandBrake:
 
             return info
 
-        except FileNotFoundError:
-            raise HandBrakeError("HandBrakeCLI not found")
+        except FileNotFoundError as e:
+            raise HandBrakeError("HandBrakeCLI not found") from e

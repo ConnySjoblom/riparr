@@ -86,7 +86,7 @@ def config() -> None:
     table.add_column("Setting", style="cyan")
     table.add_column("Value", style="green")
 
-    for field_name, field_info in settings.model_fields.items():
+    for field_name, _field_info in settings.model_fields.items():
         value = getattr(settings, field_name)
         # Mask sensitive values
         if "key" in field_name.lower() and value:

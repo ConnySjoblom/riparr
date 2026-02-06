@@ -1,13 +1,13 @@
 """Disc and title models."""
 
 from datetime import timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, Field, computed_field
 
 
-class DiscType(str, Enum):
+class DiscType(StrEnum):
     """Type of optical disc."""
 
     DVD = "dvd"
@@ -16,7 +16,7 @@ class DiscType(str, Enum):
     UNKNOWN = "unknown"
 
 
-class MediaType(str, Enum):
+class MediaType(StrEnum):
     """Type of media content."""
 
     MOVIE = "movie"

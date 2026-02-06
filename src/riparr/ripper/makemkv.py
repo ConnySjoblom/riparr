@@ -83,11 +83,11 @@ class MakeMKV:
             )
             return disc
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise MakeMKVError(
                 f"MakeMKV not found at '{self.executable}'. "
                 "Please install MakeMKV and ensure makemkvcon is in PATH."
-            )
+            ) from e
         except Exception as e:
             raise MakeMKVError(f"Failed to scan disc: {e}") from e
 
@@ -190,11 +190,11 @@ class MakeMKV:
             log.info("Title ripped successfully", title=title_index, output=str(output_file))
             return output_file
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise MakeMKVError(
                 f"MakeMKV not found at '{self.executable}'. "
                 "Please install MakeMKV and ensure makemkvcon is in PATH."
-            )
+            ) from e
         except MakeMKVError:
             raise
         except Exception as e:

@@ -42,9 +42,9 @@ class TestMakeMKVParser:
         # Create title first
         parse_line('TINFO:0,9,0,"1:30:00"', state)
 
-        # Add audio track
+        # Add audio track (attr_id: 1=TYPE, 6=CODEC_SHORT, 3=LANG_CODE, 25=CHANNELS)
         parse_line('SINFO:0,1,1,0,"Audio"', state)
-        parse_line('SINFO:0,1,5,0,"DTS-HD MA"', state)
+        parse_line('SINFO:0,1,6,0,"DTS-HD MA"', state)
         parse_line('SINFO:0,1,3,0,"eng"', state)
         parse_line('SINFO:0,1,25,0,"6"', state)
 

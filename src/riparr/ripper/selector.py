@@ -1,6 +1,6 @@
 """Title selection logic for disc ripping."""
 
-from enum import Enum
+from enum import StrEnum
 
 import structlog
 
@@ -11,7 +11,7 @@ from riparr.core.title import group_by_duration, is_likely_play_all
 log = structlog.get_logger()
 
 
-class DiscClassification(str, Enum):
+class DiscClassification(StrEnum):
     """Classification of disc content type."""
 
     MOVIE = "movie"

@@ -54,7 +54,7 @@ class Dashboard:
                 TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
                 expand=True,
             )
-            task_id = progress.add_task(
+            progress.add_task(
                 f"Title {rip.title_progress}",
                 total=100,
                 completed=rip.progress,

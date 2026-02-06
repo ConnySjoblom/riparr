@@ -3,7 +3,7 @@
 import pytest
 
 from riparr.config.settings import Settings
-from riparr.core.disc import Title
+from riparr.core.disc import AudioTrack, Title
 from riparr.ripper.selector import DiscClassification, TitleSelector
 
 
@@ -52,10 +52,11 @@ class TestDiscClassification:
         assert selector.classify_disc(titles) == DiscClassification.TV_SEASON
 
     def test_classify_tv_series(self, selector: TitleSelector) -> None:
-        """2-3 similar episodes should be TV series."""
+        """3 similar episodes should be TV series."""
         titles = [
             Title(index=0, duration=2500),
-            Title(index=1, duration=2600),
+            Title(index=1, duration=2550),
+            Title(index=2, duration=2600),
         ]
         assert selector.classify_disc(titles) == DiscClassification.TV_SERIES
 
@@ -119,13 +120,13 @@ class TestPlayAllDetection:
     def test_detect_play_all(self, selector: TitleSelector) -> None:
         """Play-all titles should be filtered from TV discs."""
         titles = [
-            # 4 episodes
-            Title(index=0, duration=2520),
-            Title(index=1, duration=2520),
-            Title(index=2, duration=2520),
-            Title(index=3, duration=2520),
+            # 4 episodes with different sizes to avoid duplicate filter
+            Title(index=0, duration=2520, size_bytes=1000000),
+            Title(index=1, duration=2520, size_bytes=1000001),
+            Title(index=2, duration=2520, size_bytes=1000002),
+            Title(index=3, duration=2520, size_bytes=1000003),
             # Play all (sum of episodes)
-            Title(index=4, duration=10080),
+            Title(index=4, duration=10080, size_bytes=4000000),
         ]
         selected = selector.select_titles(titles)
 
@@ -142,8 +143,8 @@ class TestMainFeatureDetection:
         titles = [
             Title(index=0, duration=7200, audio_tracks=[]),
             Title(index=1, duration=7000, audio_tracks=[
-                type("AudioTrack", (), {"index": 0, "codec": "DTS"})(),
-                type("AudioTrack", (), {"index": 1, "codec": "AC3"})(),
+                AudioTrack(index=0, codec="DTS"),
+                AudioTrack(index=1, codec="AC3"),
             ]),
         ]
         main = selector.get_main_feature(titles)

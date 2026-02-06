@@ -308,7 +308,7 @@ def finalize_state(state: ParseState) -> Disc:
         title = state.titles[title_idx]
 
         # Attach audio tracks
-        for (t_idx, s_idx), track in state.audio_tracks.items():
+        for (t_idx, _s_idx), track in state.audio_tracks.items():
             if t_idx == title_idx:
                 title.audio_tracks.append(track)
 
@@ -316,7 +316,7 @@ def finalize_state(state: ParseState) -> Disc:
         title.audio_tracks.sort(key=lambda t: t.index)
 
         # Attach subtitle tracks
-        for (t_idx, s_idx), track in state.subtitle_tracks.items():
+        for (t_idx, _s_idx), track in state.subtitle_tracks.items():
             if t_idx == title_idx:
                 title.subtitle_tracks.append(track)
 

@@ -43,10 +43,10 @@ def compute_dvd_id(device_or_path: str) -> str:
         log.info("Computed DVD ID", device=device_or_path, dvd_id=crc)
         return crc
 
-    except ImportError:
+    except ImportError as e:
         raise RuntimeError(
             "pydvdid-m is not installed. Install with: pip install pydvdid-m"
-        )
+        ) from e
     except Exception as e:
         raise RuntimeError(f"Failed to compute DVD ID: {e}") from e
 

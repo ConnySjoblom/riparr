@@ -5,7 +5,6 @@ with access to the udev socket.
 """
 
 from collections.abc import Callable
-from typing import Literal
 
 import anyio
 import structlog
@@ -60,8 +59,8 @@ class UdevMonitor:
         """
         try:
             import pyudev
-        except ImportError:
-            raise RuntimeError("pyudev is not installed")
+        except ImportError as e:
+            raise RuntimeError("pyudev is not installed") from e
 
         context = pyudev.Context()
         monitor = pyudev.Monitor.from_netlink(context)

@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from collections.abc import Callable
+from enum import StrEnum
 from threading import Lock
-from typing import Callable
 
 
-class TaskState(str, Enum):
+class TaskState(StrEnum):
     """State of a tracked task."""
 
     IDLE = "idle"

@@ -1,7 +1,7 @@
 """Job state machine for rip/encode operations."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from riparr.core.disc import Disc, Title
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     """Job status states."""
 
     PENDING = "pending"
