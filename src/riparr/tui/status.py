@@ -1,8 +1,8 @@
 """Shared status tracker for TUI updates."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections.abc import Callable
 from enum import StrEnum
 from threading import Lock
 

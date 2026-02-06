@@ -34,6 +34,7 @@ ARG MAKEMKV_VERSION=1.18.3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     ca-certificates \
+    less \
     qtbase5-dev \
     libqt5opengl5-dev \
     && rm -rf /var/lib/apt/lists/*

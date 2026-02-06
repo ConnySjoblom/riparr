@@ -161,7 +161,7 @@ class DevicePoller:
                 return status == CDS_DISC_OK
             finally:
                 os.close(fd)
-        except (OSError, IOError):
+        except OSError:
             pass
 
         return False
