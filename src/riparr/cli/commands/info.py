@@ -41,9 +41,9 @@ def info(
 
 async def _show_info(device: str, json_output: bool) -> None:
     """Scan and display disc information."""
-    from riparr.ripper.makemkv import MakeMKV
-    from riparr.metadata.dvdid import compute_dvd_id
     from riparr.metadata.arm_api import lookup_disc
+    from riparr.metadata.dvdid import compute_dvd_id
+    from riparr.ripper.makemkv import MakeMKV
 
     settings = get_settings()
     makemkv = MakeMKV(settings.makemkv_path)

@@ -39,10 +39,7 @@ def watch(
     """
     settings = get_settings()
 
-    if devices:
-        device_list = devices
-    else:
-        device_list = [settings.default_device]
+    device_list = devices or [settings.default_device]
 
     if not gui:
         console.print("[bold blue]Riparr Watch Mode[/]")

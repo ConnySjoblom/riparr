@@ -76,7 +76,7 @@ class Settings(BaseSettings):
         description="Path to HandBrakeCLI binary",
     )
     handbrake_preset: str = Field(
-        default="Fast 1080p30",
+        default="HQ 576p25 Surround",
         description="HandBrake preset to use",
     )
     video_codec: Literal["x264", "x265", "nvenc_h264", "nvenc_h265"] = Field(
@@ -84,10 +84,22 @@ class Settings(BaseSettings):
         description="Video encoder to use",
     )
     video_quality: int = Field(
-        default=20,
+        default=19,
         ge=0,
         le=51,
         description="Video quality (CRF/CQ value, lower is better)",
+    )
+    encoder_preset: str = Field(
+        default="slow",
+        description="Encoder speed preset (ultrafast to placebo)",
+    )
+    deinterlace: bool = Field(
+        default=True,
+        description="Enable comb detection and decomb filter",
+    )
+    subtitle_scan: bool = Field(
+        default=True,
+        description="Scan for forced subtitles and burn in",
     )
 
     # Metadata

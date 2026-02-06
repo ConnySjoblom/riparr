@@ -57,11 +57,13 @@ class HandBrake:
         self,
         input_path: Path,
         output_path: Path,
-        preset: str = "Fast 1080p30",
+        preset: str = "HQ 576p25 Surround",
         video_codec: VideoCodec = "x265",
-        quality: int = 20,
+        quality: int = 19,
+        encoder_preset: str = "slow",
         audio_codec: str = "copy",
-        subtitle_mode: str = "none",
+        subtitle_scan: bool = True,
+        deinterlace: bool = True,
         progress_callback: Callable[[float], None] | Callable[[ProgressInfo], None] | None = None,
     ) -> Path:
         """Encode a video file.
@@ -72,9 +74,11 @@ class HandBrake:
             preset: HandBrake preset name
             video_codec: Video encoder to use
             quality: Video quality (CRF/CQ value)
+            encoder_preset: Encoder speed preset (slow, medium, fast, etc.)
             audio_codec: Audio codec (copy, aac, ac3, etc.)
-            subtitle_mode: Subtitle handling (none, first, all)
-            progress_callback: Optional callback for progress updates (0-100)
+            subtitle_scan: Scan for forced subtitles and burn in
+            deinterlace: Enable comb detection and decomb filter
+            progress_callback: Optional callback for progress updates
 
         Returns:
             Path to encoded file
@@ -97,6 +101,7 @@ class HandBrake:
             "--preset", preset,
             "--encoder", encoder,
             "--quality", str(quality),
+            "--encoder-preset", encoder_preset,
             "--audio-lang-list", "eng,und",
             "--first-audio",
         ]
@@ -107,12 +112,13 @@ class HandBrake:
         else:
             cmd.extend(["--aencoder", audio_codec])
 
-        # Subtitle handling
-        if subtitle_mode == "first":
-            cmd.extend(["--subtitle", "1"])
-        elif subtitle_mode == "all":
-            cmd.extend(["--all-subtitles"])
-        # "none" = no subtitle flags
+        # Subtitle scan for forced subs
+        if subtitle_scan:
+            cmd.extend(["--subtitle", "scan", "-F"])
+
+        # Deinterlace (comb detection + decomb)
+        if deinterlace:
+            cmd.extend(["--comb-detect", "--decomb"])
 
         log.info(
             "Starting encode",

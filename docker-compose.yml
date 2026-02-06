@@ -30,9 +30,12 @@ services:
 
       # Encoding settings
       - RIPARR_ENCODE_ENABLED=true
-      - RIPARR_HANDBRAKE_PRESET=Fast 1080p30
+      - RIPARR_HANDBRAKE_PRESET=HQ 576p25 Surround
       - RIPARR_VIDEO_CODEC=x265
-      - RIPARR_VIDEO_QUALITY=20
+      - RIPARR_VIDEO_QUALITY=19
+      - RIPARR_ENCODER_PRESET=slow
+      - RIPARR_DEINTERLACE=true
+      - RIPARR_SUBTITLE_SCAN=true
 
       # Detection settings
       - RIPARR_DETECTION_METHOD=auto

@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ============================================
 FROM base AS makemkv-builder
 
-ARG MAKEMKV_VERSION=1.17.7
+ARG MAKEMKV_VERSION=1.18.3
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \

@@ -117,7 +117,7 @@ class DevicePoller:
         device_name = os.path.basename(device)
         events_path = f"/sys/block/{device_name}/events_poll_msecs"
         try:
-            with open(events_path) as f:
+            with open(events_path):
                 # If we can read this, the device exists and may have a disc
                 pass
         except (FileNotFoundError, PermissionError):

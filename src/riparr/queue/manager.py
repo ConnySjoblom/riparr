@@ -271,6 +271,9 @@ class QueueManager:
                         preset=self.settings.handbrake_preset,
                         video_codec=self.settings.video_codec,
                         quality=self.settings.video_quality,
+                        encoder_preset=self.settings.encoder_preset,
+                        deinterlace=self.settings.deinterlace,
+                        subtitle_scan=self.settings.subtitle_scan,
                         progress_callback=encode_progress_callback,
                     )
 
@@ -351,6 +354,9 @@ class QueueManager:
                         preset=self.settings.handbrake_preset,
                         video_codec=self.settings.video_codec,
                         quality=self.settings.video_quality,
+                        encoder_preset=self.settings.encoder_preset,
+                        deinterlace=self.settings.deinterlace,
+                        subtitle_scan=self.settings.subtitle_scan,
                         progress_callback=encode_progress_callback,
                     )
 

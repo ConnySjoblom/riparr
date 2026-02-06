@@ -77,12 +77,12 @@ async def _run_rip(
 ) -> None:
     """Execute the rip operation."""
     from riparr.core.job import Job, JobStatus
-    from riparr.metadata.dvdid import compute_dvd_id
+    from riparr.encoder.handbrake import HandBrake
     from riparr.metadata.arm_api import lookup_disc
+    from riparr.metadata.dvdid import compute_dvd_id
+    from riparr.output.naming import OutputNamer
     from riparr.ripper.makemkv import MakeMKV
     from riparr.ripper.selector import TitleSelector
-    from riparr.encoder.handbrake import HandBrake
-    from riparr.output.naming import OutputNamer
 
     settings = get_settings()
     makemkv = MakeMKV(settings.makemkv_path)
@@ -164,6 +164,9 @@ async def _run_rip(
                     preset=settings.handbrake_preset,
                     video_codec=settings.video_codec,
                     quality=settings.video_quality,
+                    encoder_preset=settings.encoder_preset,
+                    deinterlace=settings.deinterlace,
+                    subtitle_scan=settings.subtitle_scan,
                     progress_callback=lambda info: progress.update(
                         task, description=f"Encoding: {info.percent:.1f}%"
                     ),
