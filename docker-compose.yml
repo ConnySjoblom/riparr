@@ -1,0 +1,50 @@
+services:
+  riparr:
+    image: ghcr.io/${GITHUB_USER:-riparr}/riparr:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: riparr
+    restart: unless-stopped
+
+    # Required for optical drive access
+    privileged: true
+    devices:
+      - /dev/sr0:/dev/sr0
+      # Add more drives as needed:
+      # - /dev/sr1:/dev/sr1
+
+    # For udev disc detection (optional, falls back to polling)
+    volumes:
+      - /run/udev:/run/udev:ro
+      - riparr-raw:/data/raw
+      - riparr-media:/data/media
+      - riparr-config:/config
+
+    environment:
+      # MakeMKV license key (optional, free during beta)
+      - RIPARR_MAKEMKV_KEY=${MAKEMKV_KEY:-}
+
+      # TMDB API key for metadata (optional)
+      - RIPARR_TMDB_API_KEY=${TMDB_API_KEY:-}
+
+      # Encoding settings
+      - RIPARR_ENCODE_ENABLED=true
+      - RIPARR_HANDBRAKE_PRESET=Fast 1080p30
+      - RIPARR_VIDEO_CODEC=x265
+      - RIPARR_VIDEO_QUALITY=20
+
+      # Detection settings
+      - RIPARR_DETECTION_METHOD=auto
+      - RIPARR_EJECT_AFTER_RIP=true
+
+      # Logging
+      - RIPARR_LOG_LEVEL=INFO
+
+volumes:
+  riparr-raw:
+    driver: local
+  riparr-media:
+    driver: local
+  riparr-config:
+    driver: local
