@@ -80,7 +80,7 @@ RUN mkdir -p /data/raw /data/media /config \
 WORKDIR /app
 
 # Copy application code
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
 # Install the application
