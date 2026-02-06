@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # udev for disc detection
     udev \
     libudev-dev \
+    # Timezone support
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
@@ -90,7 +92,8 @@ RUN pip install --no-cache-dir .
 USER riparr
 
 # Environment defaults
-ENV RIPARR_RAW_DIR=/data/raw \
+ENV TZ=UTC \
+    RIPARR_RAW_DIR=/data/raw \
     RIPARR_OUTPUT_DIR=/data/media \
     RIPARR_DEFAULT_DEVICE=/dev/sr0 \
     RIPARR_LOG_LEVEL=INFO

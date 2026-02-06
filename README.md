@@ -23,8 +23,9 @@ docker run -d \
   -v /run/udev:/run/udev:ro \
   -v riparr-raw:/data/raw \
   -v riparr-media:/data/media \
+  -e TZ=America/New_York \
   -e RIPARR_TMDB_API_KEY=your_key \
-  ghcr.io/YOUR_USERNAME/riparr:latest
+  ghcr.io/connysjoblom/riparr:latest
 ```
 
 ## TrueNAS SCALE
@@ -49,12 +50,14 @@ All settings via environment variables with `RIPARR_` prefix:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `TZ` | `UTC` | Timezone (e.g., `America/New_York`, `Europe/London`) |
 | `RIPARR_RAW_DIR` | `/data/raw` | Raw MKV output |
 | `RIPARR_OUTPUT_DIR` | `/data/media` | Encoded output |
-| `RIPARR_TMDB_API_KEY` | - | TMDB API key |
+| `RIPARR_TMDB_API_KEY` | - | TMDB API key (optional) |
 | `RIPARR_VIDEO_CODEC` | `x265` | Encoder (x264/x265/nvenc) |
 | `RIPARR_VIDEO_QUALITY` | `19` | CRF value |
 | `RIPARR_HANDBRAKE_PRESET` | `HQ 576p25 Surround` | HandBrake preset |
+| `RIPARR_EJECT_AFTER_RIP` | `true` | Auto-eject disc when done |
 
 ## License
 
