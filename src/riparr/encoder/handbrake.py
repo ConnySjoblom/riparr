@@ -64,7 +64,7 @@ class HandBrake:
         audio_codec: str = "copy",
         subtitle_scan: bool = True,
         deinterlace: bool = True,
-        progress_callback: Callable[[float], None] | Callable[[ProgressInfo], None] | None = None,
+        progress_callback: Callable[[ProgressInfo], None] | None = None,
     ) -> Path:
         """Encode a video file.
 
@@ -214,7 +214,7 @@ class HandBrake:
             log.warning("HandBrakeCLI not found")
             return []
 
-    async def scan(self, input_path: Path) -> dict:
+    async def scan(self, input_path: Path) -> dict[str, str | list[str] | None]:
         """Scan a video file for information.
 
         Args:
@@ -241,7 +241,7 @@ class HandBrake:
             output = stdout.decode("utf-8", errors="replace")
 
             # Parse scan output
-            info = {
+            info: dict[str, str | list[str] | None] = {
                 "duration": None,
                 "size": None,
                 "video_codec": None,

@@ -90,11 +90,12 @@ class Title(BaseModel):
         """Human-readable size string."""
         if self.size_bytes == 0:
             return "N/A"
+        size = float(self.size_bytes)
         for unit in ["B", "KB", "MB", "GB"]:
-            if self.size_bytes < 1024:
-                return f"{self.size_bytes:.1f} {unit}"
-            self.size_bytes /= 1024
-        return f"{self.size_bytes:.1f} TB"
+            if size < 1024:
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} TB"
 
     @computed_field
     @property

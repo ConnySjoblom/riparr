@@ -7,6 +7,7 @@ and automatic recovery of interrupted jobs.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -209,7 +210,7 @@ class QueueManager:
                 )
 
                 # Progress callback for tracker
-                def make_progress_callback(title_idx: int) -> callable:
+                def make_progress_callback(title_idx: int) -> Callable[[float], None]:
                     def callback(progress: float) -> None:
                         if self.tracker:
                             # Calculate overall progress
@@ -334,7 +335,9 @@ class QueueManager:
                 # Reconstruct disc info from metadata
                 disc = Disc(name=job_info.name)
                 if job_info.metadata:
-                    disc.dvd_id = job_info.metadata.get("dvd_id")
+                    dvd_id = job_info.metadata.get("dvd_id")
+                    if isinstance(dvd_id, str):
+                        disc.dvd_id = dvd_id
 
                 output_path = self.namer.get_output_path(disc, job_info.path)
                 output_path.parent.mkdir(parents=True, exist_ok=True)

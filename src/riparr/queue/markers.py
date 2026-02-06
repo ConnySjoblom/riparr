@@ -33,12 +33,12 @@ class JobInfo:
     size_bytes: int
     created_at: datetime
     error: str | None = None
-    metadata: dict | None = None
+    metadata: dict[str, str | int | None] | None = None
 
     @property
     def size_str(self) -> str:
         """Human-readable size."""
-        size = self.size_bytes
+        size = float(self.size_bytes)
         for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024:
                 return f"{size:.1f} {unit}"
@@ -49,7 +49,7 @@ class JobInfo:
 class MarkerManager:
     """Manage marker files for job tracking."""
 
-    MARKER_SUFFIXES = {
+    MARKER_SUFFIXES: dict[JobStatus, str] = {
         "ready": ".ready",
         "transcoding": ".transcoding",
         "failed": ".failed",
@@ -68,7 +68,7 @@ class MarkerManager:
         self,
         mkv_path: Path,
         status: JobStatus,
-        metadata: dict | None = None,
+        metadata: dict[str, str | int | None] | None = None,
         error: str | None = None,
     ) -> Path:
         """Create a marker file for an MKV.
@@ -89,7 +89,7 @@ class MarkerManager:
             mkv_path.suffix + self.MARKER_SUFFIXES[status]
         )
 
-        marker_data = {
+        marker_data: dict[str, str | dict[str, str | int | None]] = {
             "status": status,
             "created_at": datetime.now().isoformat(),
             "mkv_path": str(mkv_path),

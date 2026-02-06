@@ -74,7 +74,7 @@ def parse_progress_line(line: str) -> EncodeProgress | None:
     return None
 
 
-def parse_encode_output(output: str) -> dict:
+def parse_encode_output(output: str) -> dict[str, bool | float | int | str | None]:
     """Parse complete HandBrake output for results.
 
     Args:
@@ -83,7 +83,7 @@ def parse_encode_output(output: str) -> dict:
     Returns:
         Dict with encoding results
     """
-    result = {
+    result: dict[str, bool | float | int | str | None] = {
         "success": False,
         "duration": None,
         "size_bytes": None,

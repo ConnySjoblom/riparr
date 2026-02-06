@@ -1,6 +1,6 @@
 """Media file analysis using pymediainfo."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import structlog
@@ -50,14 +50,8 @@ class MediaInfo:
     size_bytes: int = 0
     container: str = ""
     video: VideoInfo | None = None
-    audio_tracks: list[AudioInfo] | None = None
-    subtitle_tracks: list[SubtitleInfo] | None = None
-
-    def __post_init__(self) -> None:
-        if self.audio_tracks is None:
-            self.audio_tracks = []
-        if self.subtitle_tracks is None:
-            self.subtitle_tracks = []
+    audio_tracks: list[AudioInfo] = field(default_factory=list)
+    subtitle_tracks: list[SubtitleInfo] = field(default_factory=list)
 
     @property
     def duration_str(self) -> str:

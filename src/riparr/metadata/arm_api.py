@@ -113,7 +113,7 @@ async def submit_disc(
     settings = get_settings()
     url = f"{settings.arm_api_url}/api/v1/submit"
 
-    data = {
+    data: dict[str, str | int] = {
         "crc64": dvd_id,
         "title": title,
         "video_type": media_type,

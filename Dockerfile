@@ -53,9 +53,7 @@ RUN cd makemkv-oss-${MAKEMKV_VERSION} \
     && make install
 
 RUN cd makemkv-bin-${MAKEMKV_VERSION} \
-    && mkdir -p /tmp/eula \
-    && echo "yes" > /tmp/eula/accepted \
-    && make install
+    && echo "yes" | make install
 
 # ============================================
 # Final image
