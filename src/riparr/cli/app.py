@@ -20,7 +20,15 @@ console = Console()
 
 def configure_logging() -> None:
     """Configure structured logging."""
+    import logging
+
     settings = get_settings()
+
+    # Configure stdlib logging
+    logging.basicConfig(
+        format="%(message)s",
+        level=getattr(logging, settings.log_level.upper(), logging.INFO),
+    )
 
     processors = [
         structlog.stdlib.filter_by_level,
@@ -40,7 +48,7 @@ def configure_logging() -> None:
         processors=processors,
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
+        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 
