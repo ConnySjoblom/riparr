@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libudev-dev \
     # Timezone support
     tzdata \
+    # For user switching in entrypoint
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
@@ -89,11 +91,14 @@ COPY src/ ./src/
 # Install the application
 RUN pip install --no-cache-dir .
 
-# Switch to non-root user
-USER riparr
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Environment defaults
 ENV TZ=UTC \
+    PUID=568 \
+    PGID=568 \
     RIPARR_RAW_DIR=/data/raw \
     RIPARR_OUTPUT_DIR=/data/media \
     RIPARR_DEFAULT_DEVICE=/dev/sr0 \
@@ -103,5 +108,5 @@ ENV TZ=UTC \
 # Volumes
 VOLUME ["/data/raw", "/data/media", "/config"]
 
-ENTRYPOINT ["riparr"]
-CMD ["watch", "--gui"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["riparr", "watch", "--gui"]
