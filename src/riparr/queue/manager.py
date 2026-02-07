@@ -68,13 +68,13 @@ class QueueManager:
         """
         log.info("Processing disc", device=device)
 
-        # Create output directory for this disc
-        disc_dir = self.settings.raw_dir / f"disc_{device.replace('/', '_')}"
-        disc_dir.mkdir(parents=True, exist_ok=True)
+        # Start with a temporary device-based directory (will be renamed after metadata lookup)
+        temp_disc_dir = self.settings.raw_dir / f"disc_{device.replace('/', '_')}"
+        temp_disc_dir.mkdir(parents=True, exist_ok=True)
 
         job = Job(
             disc=Disc(device=device),
-            output_dir=disc_dir,
+            output_dir=temp_disc_dir,
         )
 
         try:
@@ -88,6 +88,17 @@ class QueueManager:
 
             # Lookup metadata
             await self._lookup_metadata(disc, device)
+
+            # Update output directory to use metadata-based naming
+            disc_dir = self._get_disc_output_dir(disc, device)
+            if disc_dir != temp_disc_dir:
+                disc_dir.mkdir(parents=True, exist_ok=True)
+                # Remove the empty temp directory if it was just created
+                if temp_disc_dir.exists() and not any(temp_disc_dir.iterdir()):
+                    temp_disc_dir.rmdir()
+                job.output_dir = disc_dir
+            else:
+                disc_dir = temp_disc_dir
 
             # Select titles
             job.selected_titles = self.selector.select_titles(disc.titles)
@@ -127,6 +138,7 @@ class QueueManager:
                     "dvd_id": disc.dvd_id,
                     "title": disc.metadata.title if disc.metadata else None,
                     "year": disc.metadata.year if disc.metadata else None,
+                    "imdb_id": disc.metadata.imdb_id if disc.metadata else None,
                 }
                 self.markers.create_marker(mkv_file, "ready", metadata=metadata)
 
@@ -344,6 +356,52 @@ class QueueManager:
             log.info("Disc ejected", device=device)
         except Exception as e:
             log.warning("Failed to eject disc", device=device, error=str(e))
+
+    def _get_disc_output_dir(self, disc: Disc, device: str) -> Path:
+        """Generate the output directory for a disc based on metadata.
+
+        Uses the format: <title> (<year>) {imdb=<id>}
+
+        Args:
+            disc: Disc object with optional metadata
+            device: Device path (fallback)
+
+        Returns:
+            Output directory path
+        """
+        import re
+
+        if disc.metadata:
+            # Use metadata to generate proper folder name
+            title = disc.metadata.title
+            year = disc.metadata.year
+            imdb_id = disc.metadata.imdb_id
+
+            # Sanitize title for filesystem
+            title = re.sub(r'[<>:"/\\|?*]', "", title)
+            title = re.sub(r"\s+", " ", title).strip()
+
+            if year and imdb_id:
+                folder_name = f"{title} ({year}) {{imdb-{imdb_id}}}"
+            elif year:
+                folder_name = f"{title} ({year})"
+            elif imdb_id:
+                folder_name = f"{title} {{imdb-{imdb_id}}}"
+            else:
+                folder_name = title
+
+            return self.settings.raw_dir / folder_name
+
+        # Fallback to disc name if available
+        if disc.name:
+            # Clean up disc name
+            name = re.sub(r'[<>:"/\\|?*]', "", disc.name)
+            name = re.sub(r"[\._]", " ", name)
+            name = re.sub(r"\s+", " ", name).strip()
+            return self.settings.raw_dir / name
+
+        # Last resort: device-based name
+        return self.settings.raw_dir / f"disc_{device.replace('/', '_')}"
 
     async def process_queue(self) -> None:
         """Process pending items in the encoding queue."""
