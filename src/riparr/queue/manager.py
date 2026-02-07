@@ -101,6 +101,15 @@ class QueueManager:
             else:
                 disc_dir = temp_disc_dir
 
+            # Check if already processed
+            if self._is_already_processed(disc):
+                disc_name = disc.metadata.title if disc.metadata else disc.name or "Unknown"
+                log.info("Disc already processed, skipping", disc=disc_name)
+                if self.tracker:
+                    self.tracker.add_event(f"[yellow]Already processed:[/] {disc_name}")
+                job.complete()
+                return job
+
             # Select titles
             job.selected_titles = self.selector.select_titles(disc.titles)
 
@@ -407,6 +416,54 @@ class QueueManager:
 
         # Last resort: device-based name
         return self.settings.raw_dir / f"disc_{device.replace('/', '_')}"
+
+    def _is_already_processed(self, disc: Disc) -> bool:
+        """Check if a disc has already been processed.
+
+        Checks both raw_dir and output_dir for existing folders matching the disc.
+
+        Args:
+            disc: Disc object with metadata
+
+        Returns:
+            True if disc appears to be already processed
+        """
+        import re
+
+        if not disc.metadata:
+            # Can't check without metadata
+            return False
+
+        title = disc.metadata.title
+        year = disc.metadata.year
+        imdb_id = disc.metadata.imdb_id
+
+        # Sanitize title for matching
+        title_clean = re.sub(r'[<>:"/\\|?*]', "", title).strip()
+
+        # Build possible folder name patterns
+        patterns = []
+        if year and imdb_id:
+            patterns.append(f"{title_clean} ({year}) {{imdb-{imdb_id}}}")
+        if year:
+            patterns.append(f"{title_clean} ({year})")
+        patterns.append(title_clean)
+
+        # Check raw_dir
+        for pattern in patterns:
+            raw_path = self.settings.raw_dir / pattern
+            if raw_path.exists() and any(raw_path.glob("*.mkv")):
+                log.debug("Found in raw_dir", path=str(raw_path))
+                return True
+
+        # Check output_dir (Movies subfolder)
+        for pattern in patterns:
+            output_path = self.settings.output_dir / "Movies" / pattern
+            if output_path.exists() and any(output_path.glob("*.mkv")):
+                log.debug("Found in output_dir", path=str(output_path))
+                return True
+
+        return False
 
     def _cleanup_raw_file(self, mkv_file: Path) -> None:
         """Clean up raw file and marker after successful encoding.
