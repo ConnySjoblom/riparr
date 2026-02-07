@@ -20,7 +20,12 @@ from riparr.core.job import Job, JobStatus
 from riparr.encoder.handbrake import HandBrake
 from riparr.metadata.arm_api import lookup_disc
 from riparr.metadata.dvdid import compute_dvd_id
-from riparr.output.naming import OutputNamer
+from riparr.output.naming import (
+    OutputNamer,
+    generate_folder_name,
+    generate_folder_name_from_metadata,
+    sanitize_filename,
+)
 from riparr.queue.markers import MarkerManager
 from riparr.ripper.makemkv import MakeMKV
 from riparr.ripper.selector import TitleSelector
@@ -374,7 +379,7 @@ class QueueManager:
     def _get_disc_output_dir(self, disc: Disc, device: str) -> Path:
         """Generate the output directory for a disc based on metadata.
 
-        Uses the format: <title> (<year>) {imdb=<id>}
+        Uses the format: <title> (<year>) {imdb-<id>}
 
         Args:
             disc: Disc object with optional metadata
@@ -383,35 +388,15 @@ class QueueManager:
         Returns:
             Output directory path
         """
-        import re
-
         if disc.metadata:
-            # Use metadata to generate proper folder name
-            title = disc.metadata.title
-            year = disc.metadata.year
-            imdb_id = disc.metadata.imdb_id
-
-            # Sanitize title for filesystem
-            title = re.sub(r'[<>:"/\\|?*]', "", title)
-            title = re.sub(r"\s+", " ", title).strip()
-
-            if year and imdb_id:
-                folder_name = f"{title} ({year}) {{imdb-{imdb_id}}}"
-            elif year:
-                folder_name = f"{title} ({year})"
-            elif imdb_id:
-                folder_name = f"{title} {{imdb-{imdb_id}}}"
-            else:
-                folder_name = title
-
+            folder_name = generate_folder_name_from_metadata(disc.metadata)
             return self.settings.raw_dir / folder_name
 
         # Fallback to disc name if available
         if disc.name:
-            # Clean up disc name
-            name = re.sub(r'[<>:"/\\|?*]', "", disc.name)
-            name = re.sub(r"[\._]", " ", name)
-            name = re.sub(r"\s+", " ", name).strip()
+            name = sanitize_filename(disc.name)
+            name = name.replace("_", " ").replace(".", " ")
+            name = " ".join(name.split())  # Normalize whitespace
             return self.settings.raw_dir / name
 
         # Last resort: device-based name
@@ -428,26 +413,20 @@ class QueueManager:
         Returns:
             True if disc appears to be already processed
         """
-        import re
-
         if not disc.metadata:
             # Can't check without metadata
             return False
 
-        title = disc.metadata.title
-        year = disc.metadata.year
-        imdb_id = disc.metadata.imdb_id
+        metadata = disc.metadata
 
-        # Sanitize title for matching
-        title_clean = re.sub(r'[<>:"/\\|?*]', "", title).strip()
-
-        # Build possible folder name patterns
-        patterns = []
-        if year and imdb_id:
-            patterns.append(f"{title_clean} ({year}) {{imdb-{imdb_id}}}")
-        if year:
-            patterns.append(f"{title_clean} ({year})")
-        patterns.append(title_clean)
+        # Build possible folder name patterns (most specific to least)
+        patterns = [
+            generate_folder_name(metadata.title, metadata.year, metadata.imdb_id),
+            generate_folder_name(metadata.title, metadata.year),
+            generate_folder_name(metadata.title),
+        ]
+        # Remove duplicates while preserving order
+        patterns = list(dict.fromkeys(patterns))
 
         # Check raw_dir
         for pattern in patterns:

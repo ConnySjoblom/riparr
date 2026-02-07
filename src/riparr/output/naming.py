@@ -11,9 +11,76 @@ from pathlib import Path
 import structlog
 
 from riparr.config.settings import Settings
-from riparr.core.disc import Disc, MediaType
+from riparr.core.disc import Disc, DiscMetadata, MediaType
 
 log = structlog.get_logger()
+
+
+def sanitize_filename(name: str) -> str:
+    """Sanitize a string for use as a filename.
+
+    Removes or replaces characters that are invalid on most filesystems.
+
+    Args:
+        name: Original filename
+
+    Returns:
+        Sanitized filename
+    """
+    # Replace invalid characters
+    invalid_chars = r'[<>:"/\\|?*]'
+    name = re.sub(invalid_chars, "", name)
+
+    # Replace multiple spaces with single space
+    name = re.sub(r"\s+", " ", name)
+
+    # Strip leading/trailing whitespace and dots
+    name = name.strip(" .")
+
+    # Limit length
+    if len(name) > 200:
+        name = name[:200]
+
+    return name
+
+
+def generate_folder_name(
+    title: str,
+    year: int | None = None,
+    imdb_id: str | None = None,
+) -> str:
+    """Generate a folder name in the format: Title (Year) {imdb-id}.
+
+    Args:
+        title: Movie/show title
+        year: Release year (optional)
+        imdb_id: IMDb ID (optional)
+
+    Returns:
+        Folder name string
+    """
+    title = sanitize_filename(title)
+
+    if year and imdb_id:
+        return f"{title} ({year}) {{imdb-{imdb_id}}}"
+    elif year:
+        return f"{title} ({year})"
+    elif imdb_id:
+        return f"{title} {{imdb-{imdb_id}}}"
+    else:
+        return title
+
+
+def generate_folder_name_from_metadata(metadata: DiscMetadata) -> str:
+    """Generate a folder name from disc metadata.
+
+    Args:
+        metadata: Disc metadata object
+
+    Returns:
+        Folder name string
+    """
+    return generate_folder_name(metadata.title, metadata.year, metadata.imdb_id)
 
 
 class OutputNamer:
@@ -77,17 +144,9 @@ class OutputNamer:
         metadata = disc.metadata
         assert metadata is not None
 
-        title = self._sanitize_filename(metadata.title)
+        folder_name = generate_folder_name_from_metadata(metadata)
+        title = sanitize_filename(metadata.title)
         year = metadata.year
-
-        # Build folder name
-        if year:
-            folder_name = f"{title} ({year})"
-        else:
-            folder_name = title
-
-        if metadata.imdb_id:
-            folder_name += f" {{imdb-{metadata.imdb_id}}}"
 
         # Build filename
         if codec_string:
@@ -120,12 +179,10 @@ class OutputNamer:
         metadata = disc.metadata
         assert metadata is not None
 
-        title = self._sanitize_filename(metadata.title)
+        title = sanitize_filename(metadata.title)
 
-        # Build series folder name
-        folder_name = title
-        if metadata.imdb_id:
-            folder_name += f" {{imdb-{metadata.imdb_id}}}"
+        # Build series folder name (no year for TV)
+        folder_name = generate_folder_name(title, imdb_id=metadata.imdb_id)
 
         # Determine season (default to 1 if unknown)
         season = metadata.season or 1
@@ -164,20 +221,17 @@ class OutputNamer:
         """
         # Use disc name or label, falling back to source filename
         name = disc.name or disc.label or source_file.stem
-        name = self._sanitize_filename(name)
+        name = sanitize_filename(name)
 
         # Try to parse year from name
         year_match = re.search(r"[\._\s](\d{4})[\._\s]?", name)
-        year = year_match.group(1) if year_match else None
+        year = int(year_match.group(1)) if year_match else None
 
         # Clean up the name
         name = re.sub(r"[\._]", " ", name)
         name = re.sub(r"\s+", " ", name).strip()
 
-        if year:
-            folder_name = f"{name} ({year})"
-        else:
-            folder_name = name
+        folder_name = generate_folder_name(name, year)
 
         # Use source filename for the actual file
         if codec_string:
@@ -186,33 +240,6 @@ class OutputNamer:
             filename = f"{source_file.stem}.mkv"
 
         return self.output_dir / "Unknown" / folder_name / filename
-
-    def _sanitize_filename(self, name: str) -> str:
-        """Sanitize a string for use as a filename.
-
-        Removes or replaces characters that are invalid on most filesystems.
-
-        Args:
-            name: Original filename
-
-        Returns:
-            Sanitized filename
-        """
-        # Replace invalid characters
-        invalid_chars = r'[<>:"/\\|?*]'
-        name = re.sub(invalid_chars, "", name)
-
-        # Replace multiple spaces with single space
-        name = re.sub(r"\s+", " ", name)
-
-        # Strip leading/trailing whitespace and dots
-        name = name.strip(" .")
-
-        # Limit length
-        if len(name) > 200:
-            name = name[:200]
-
-        return name
 
     def _extract_episode_number(self, source_file: Path, title_num: int | None = None) -> int:
         """Extract episode number from filename or title number.
