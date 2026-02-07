@@ -327,6 +327,10 @@ class QueueManager:
                 self.markers.update_status(mkv_file, "complete")
                 log.info("Encoded file", input=mkv_file.name, output=str(output_path))
 
+                # Clean up raw file if enabled
+                if self.settings.delete_raw_after_encode:
+                    self._cleanup_raw_file(mkv_file)
+
                 if self.tracker:
                     self.tracker.complete_encode()
 
@@ -403,6 +407,32 @@ class QueueManager:
         # Last resort: device-based name
         return self.settings.raw_dir / f"disc_{device.replace('/', '_')}"
 
+    def _cleanup_raw_file(self, mkv_file: Path) -> None:
+        """Clean up raw file and marker after successful encoding.
+
+        Also removes the parent directory if empty.
+
+        Args:
+            mkv_file: Path to the raw MKV file
+        """
+        try:
+            # Remove the raw MKV file
+            if mkv_file.exists():
+                mkv_file.unlink()
+                log.info("Deleted raw file", file=mkv_file.name)
+
+            # Remove marker files
+            self.markers.remove_markers(mkv_file)
+
+            # Remove parent directory if empty
+            parent = mkv_file.parent
+            if parent.exists() and not any(parent.iterdir()):
+                parent.rmdir()
+                log.info("Removed empty directory", dir=str(parent))
+
+        except Exception as e:
+            log.warning("Failed to clean up raw file", file=str(mkv_file), error=str(e))
+
     async def process_queue(self) -> None:
         """Process pending items in the encoding queue."""
         self._running = True
@@ -457,6 +487,10 @@ class QueueManager:
 
                 self.markers.update_status(job_info.path, "complete")
                 log.info("Encoding complete", name=job_info.name, output=str(output_path))
+
+                # Clean up raw file if enabled
+                if self.settings.delete_raw_after_encode:
+                    self._cleanup_raw_file(job_info.path)
 
                 if self.tracker:
                     self.tracker.complete_encode()

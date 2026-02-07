@@ -274,7 +274,7 @@ class MarkerManager:
         log.info("Jobs cleared", count=count, status_filter=status_filter)
         return count
 
-    def _clear_markers(self, mkv_path: Path) -> None:
+    def remove_markers(self, mkv_path: Path) -> None:
         """Remove all markers for an MKV file.
 
         Args:
@@ -285,3 +285,6 @@ class MarkerManager:
             if marker_path.exists():
                 marker_path.unlink()
                 log.debug("Removed marker", path=str(marker_path))
+
+    # Alias for backward compatibility
+    _clear_markers = remove_markers

@@ -71,6 +71,10 @@ class Settings(BaseSettings):
         default=True,
         description="Enable encoding after ripping",
     )
+    delete_raw_after_encode: bool = Field(
+        default=True,
+        description="Delete raw MKV files after successful encoding",
+    )
     handbrake_path: str = Field(
         default="HandBrakeCLI",
         description="Path to HandBrakeCLI binary",
