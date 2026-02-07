@@ -138,22 +138,48 @@ class HandBrake:
             assert process.stdout is not None
 
             last_progress: float = 0.0
+            buffer = ""
 
-            async for line_bytes in process.stdout:
-                line = line_bytes.decode("utf-8", errors="replace").strip()
+            # HandBrake uses \r for progress updates, not \n
+            # Read in chunks and split on both \r and \n
+            while True:
+                chunk = await process.stdout.read(1024)
+                if not chunk:
+                    break
 
-                progress = parse_progress_line(line)
-                if progress and progress_callback:
-                    # Only report significant progress changes
-                    if progress.percent - last_progress >= 0.5:
-                        info = ProgressInfo(
-                            percent=progress.percent,
-                            fps=progress.fps,
-                            eta=progress.eta,
-                            stage=progress.stage,
-                        )
-                        progress_callback(info)
-                        last_progress = progress.percent
+                buffer += chunk.decode("utf-8", errors="replace")
+
+                # Split on \r or \n
+                while "\r" in buffer or "\n" in buffer:
+                    # Find the first separator
+                    r_pos = buffer.find("\r")
+                    n_pos = buffer.find("\n")
+
+                    if r_pos == -1:
+                        sep_pos = n_pos
+                    elif n_pos == -1:
+                        sep_pos = r_pos
+                    else:
+                        sep_pos = min(r_pos, n_pos)
+
+                    line = buffer[:sep_pos].strip()
+                    buffer = buffer[sep_pos + 1:]
+
+                    if not line:
+                        continue
+
+                    progress = parse_progress_line(line)
+                    if progress and progress_callback:
+                        # Only report significant progress changes
+                        if progress.percent - last_progress >= 0.5:
+                            info = ProgressInfo(
+                                percent=progress.percent,
+                                fps=progress.fps,
+                                eta=progress.eta,
+                                stage=progress.stage,
+                            )
+                            progress_callback(info)
+                            last_progress = progress.percent
 
             returncode = await process.wait()
 
