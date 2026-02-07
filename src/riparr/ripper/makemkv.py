@@ -36,27 +36,35 @@ class MakeMKV:
     def _configure_license(self, key: str) -> None:
         """Configure MakeMKV license key.
 
-        Uses makemkvcon reg command to register the key.
+        Writes the key to ~/.MakeMKV/settings.conf.
         """
-        import subprocess
+        config_dir = Path.home() / ".MakeMKV"
+        config_file = config_dir / "settings.conf"
 
         try:
-            result = subprocess.run(
-                [self.executable, "reg", key],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            if result.returncode == 0:
-                log.debug("Configured MakeMKV license key")
-            else:
-                log.warning(
-                    "Failed to register MakeMKV key",
-                    returncode=result.returncode,
-                    stderr=result.stderr.strip() if result.stderr else None,
-                )
-        except FileNotFoundError:
-            log.warning("MakeMKV not found, cannot register key")
+            config_dir.mkdir(parents=True, exist_ok=True)
+
+            # Read existing config or create new
+            lines = []
+            if config_file.exists():
+                lines = config_file.read_text().splitlines()
+
+            # Update or add the app_Key line
+            key_line = f'app_Key = "{key}"'
+            key_updated = False
+
+            for i, line in enumerate(lines):
+                if line.strip().startswith("app_Key"):
+                    lines[i] = key_line
+                    key_updated = True
+                    break
+
+            if not key_updated:
+                lines.append(key_line)
+
+            config_file.write_text("\n".join(lines) + "\n")
+            log.debug("Configured MakeMKV license key")
+
         except Exception as e:
             log.warning("Failed to configure MakeMKV license", error=str(e))
 
