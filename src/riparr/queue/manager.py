@@ -48,7 +48,7 @@ class QueueManager:
         self.settings = settings
         self.tracker = tracker
         self.markers = MarkerManager(settings.raw_dir)
-        self.makemkv = MakeMKV(settings.makemkv_path)
+        self.makemkv = MakeMKV(settings.makemkv_path, license_key=settings.makemkv_key)
         self.handbrake = HandBrake(settings.handbrake_path)
         self.selector = TitleSelector(settings)
         self.namer = OutputNamer(settings)

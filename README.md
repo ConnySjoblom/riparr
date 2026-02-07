@@ -24,9 +24,12 @@ docker run -d \
   -v riparr-raw:/data/raw \
   -v riparr-media:/data/media \
   -e TZ=America/New_York \
+  -e RIPARR_MAKEMKV_KEY=your_beta_key \
   -e RIPARR_TMDB_API_KEY=your_key \
   ghcr.io/connysjoblom/riparr:latest
 ```
+
+Get the MakeMKV beta key from the [MakeMKV forum](https://forum.makemkv.com/forum/viewtopic.php?f=5&t=1053). The key is updated monthly.
 
 ## TrueNAS SCALE
 
@@ -53,6 +56,7 @@ All settings via environment variables with `RIPARR_` prefix:
 | `TZ` | `UTC` | Timezone (e.g., `America/New_York`, `Europe/London`) |
 | `RIPARR_RAW_DIR` | `/data/raw` | Raw MKV output |
 | `RIPARR_OUTPUT_DIR` | `/data/media` | Encoded output |
+| `RIPARR_MAKEMKV_KEY` | - | MakeMKV beta key (get from [makemkv.com](https://forum.makemkv.com/forum/viewtopic.php?f=5&t=1053)) |
 | `RIPARR_TMDB_API_KEY` | - | TMDB API key (optional) |
 | `RIPARR_VIDEO_CODEC` | `x265` | Encoder (x264/x265/nvenc) |
 | `RIPARR_VIDEO_QUALITY` | `19` | CRF value |

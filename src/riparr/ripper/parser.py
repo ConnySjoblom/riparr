@@ -75,6 +75,8 @@ class ParseState:
     progress_current: int = 0
     progress_total: int = 0
     progress_max: int = 0
+    messages: list[tuple[int, str]] = field(default_factory=list)  # (code, message)
+    errors: list[str] = field(default_factory=list)
 
 
 def parse_line(line: str, state: ParseState) -> None:
@@ -128,9 +130,26 @@ def _parse_csv(content: str) -> list[str]:
 
 
 def _parse_msg(content: str, state: ParseState) -> None:
-    """Parse MSG line."""
-    # MSG lines contain status messages, we mainly use them for error detection
-    pass
+    """Parse MSG line.
+
+    MSG format: code,flags,count,message,format,param1,param2,...
+    Error codes are typically 5xxx.
+    """
+    parts = _parse_csv(content)
+    if len(parts) < 4:
+        return
+
+    try:
+        code = int(parts[0])
+        message = parts[3] if len(parts) > 3 else ""
+
+        state.messages.append((code, message))
+
+        # Error codes are 5xxx range
+        if code >= 5000:
+            state.errors.append(message)
+    except (ValueError, IndexError):
+        pass
 
 
 def _parse_progress(content: str, state: ParseState) -> None:

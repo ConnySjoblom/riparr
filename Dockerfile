@@ -97,6 +97,7 @@ ENV TZ=UTC \
     RIPARR_OUTPUT_DIR=/data/media \
     RIPARR_DEFAULT_DEVICE=/dev/sr0 \
     RIPARR_LOG_LEVEL=INFO
+    # Optional: RIPARR_MAKEMKV_KEY=<your-beta-key>
 
 # Volumes
 VOLUME ["/data/raw", "/data/media", "/config"]

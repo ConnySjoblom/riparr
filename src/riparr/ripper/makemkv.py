@@ -22,13 +22,51 @@ class MakeMKVError(Exception):
 class MakeMKV:
     """Async wrapper for MakeMKV command-line tool."""
 
-    def __init__(self, executable: str = "makemkvcon") -> None:
+    def __init__(self, executable: str = "makemkvcon", license_key: str | None = None) -> None:
         """Initialize MakeMKV wrapper.
 
         Args:
             executable: Path to makemkvcon binary
+            license_key: Optional MakeMKV license key to configure
         """
         self.executable = executable
+        if license_key:
+            self._configure_license(license_key)
+
+    def _configure_license(self, key: str) -> None:
+        """Configure MakeMKV license key.
+
+        MakeMKV reads its settings from ~/.MakeMKV/settings.conf
+        """
+        config_dir = Path.home() / ".MakeMKV"
+        config_file = config_dir / "settings.conf"
+
+        try:
+            config_dir.mkdir(parents=True, exist_ok=True)
+
+            # Read existing config or create new
+            lines = []
+            if config_file.exists():
+                lines = config_file.read_text().splitlines()
+
+            # Update or add the app_Key line
+            key_line = f'app_Key = "{key}"'
+            key_updated = False
+
+            for i, line in enumerate(lines):
+                if line.strip().startswith("app_Key"):
+                    lines[i] = key_line
+                    key_updated = True
+                    break
+
+            if not key_updated:
+                lines.append(key_line)
+
+            config_file.write_text("\n".join(lines) + "\n")
+            log.debug("Configured MakeMKV license key")
+
+        except Exception as e:
+            log.warning("Failed to configure MakeMKV license", error=str(e))
 
     async def scan_disc(self, device: str) -> Disc:
         """Scan a disc and return its structure.
@@ -70,7 +108,22 @@ class MakeMKV:
 
             if process.returncode != 0:
                 stderr = process.stderr.decode("utf-8", errors="replace")
-                log.error("MakeMKV scan failed", returncode=process.returncode, stderr=stderr)
+                # Log errors from MSG lines (more useful than stderr)
+                error_msgs = state.errors if state.errors else [stderr] if stderr else ["Unknown error"]
+
+                # Add helpful context for common return codes
+                hint = ""
+                if process.returncode == 253:
+                    hint = " (likely: beta key expired or license issue - set RIPARR_MAKEMKV_KEY)"
+                elif process.returncode == 2:
+                    hint = " (no disc in drive)"
+
+                log.error(
+                    "MakeMKV scan failed",
+                    returncode=process.returncode,
+                    hint=hint.strip() if hint else None,
+                    errors=error_msgs,
+                )
                 # Don't raise on non-zero return code, as MakeMKV may still have output
                 # useful information before failing
 
