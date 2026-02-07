@@ -57,12 +57,12 @@ class QueueManager:
         self._encode_semaphore = asyncio.Semaphore(settings.max_concurrent_encodes)
         self._running = False
 
-    async def process_disc(self, device: str, encode: bool = True) -> Job:
+    async def process_disc(self, device: str, encode: bool = False) -> Job:
         """Process a disc from start to finish.
 
         Args:
             device: Device path
-            encode: Whether to encode after ripping (False if queue processor handles it)
+            encode: Whether to encode inline (default False - let queue processor handle it)
 
         Returns:
             Completed job

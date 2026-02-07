@@ -72,8 +72,7 @@ async def _run_watch(devices: list[str], once: bool, gui: bool) -> None:
             tracker.add_event(f"[green]Disc detected:[/] {device}")
 
         try:
-            # Don't encode here - let the queue processor handle it in parallel
-            await queue_manager.process_disc(device, encode=False)
+            await queue_manager.process_disc(device)
         except Exception as e:
             log.error("Failed to process disc", device=device, error=str(e))
 
