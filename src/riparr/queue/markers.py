@@ -83,7 +83,7 @@ class MarkerManager:
             Path to the created marker file
         """
         # Remove any existing markers
-        self._clear_markers(mkv_path)
+        self.remove_markers(mkv_path)
 
         marker_path = mkv_path.with_suffix(
             mkv_path.suffix + self.MARKER_SUFFIXES[status]
@@ -268,7 +268,7 @@ class MarkerManager:
         count = 0
 
         for job in self.list_jobs(status_filter=status_filter):
-            self._clear_markers(job.path)
+            self.remove_markers(job.path)
             count += 1
 
         log.info("Jobs cleared", count=count, status_filter=status_filter)
@@ -285,6 +285,3 @@ class MarkerManager:
             if marker_path.exists():
                 marker_path.unlink()
                 log.debug("Removed marker", path=str(marker_path))
-
-    # Alias for backward compatibility
-    _clear_markers = remove_markers
