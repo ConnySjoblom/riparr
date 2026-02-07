@@ -72,7 +72,8 @@ async def _run_watch(devices: list[str], once: bool, gui: bool) -> None:
             tracker.add_event(f"[green]Disc detected:[/] {device}")
 
         try:
-            await queue_manager.process_disc(device)
+            # Don't encode here - let the queue processor handle it in parallel
+            await queue_manager.process_disc(device, encode=False)
         except Exception as e:
             log.error("Failed to process disc", device=device, error=str(e))
 
@@ -88,12 +89,21 @@ async def _run_watch(devices: list[str], once: bool, gui: bool) -> None:
             on_disc_inserted, on_disc_removed,
         )
     else:
-        # Start watching without GUI
-        await watcher.start(
-            on_insert=on_disc_inserted,
-            on_remove=on_disc_removed,
-            once=once,
-        )
+        # Start queue processor and disc watcher in parallel
+        async with anyio.create_task_group() as tg:
+            # Start encode queue processor in background
+            tg.start_soon(queue_manager.process_queue)
+
+            # Start disc watcher
+            await watcher.start(
+                on_insert=on_disc_inserted,
+                on_remove=on_disc_removed,
+                once=once,
+            )
+
+            # Stop queue processor when watcher exits
+            queue_manager.stop()
+            tg.cancel_scope.cancel()
 
 
 async def _run_with_dashboard(
@@ -133,6 +143,9 @@ async def _run_with_dashboard(
 
     with dashboard.start():
         async with anyio.create_task_group() as tg:
+            # Start encode queue processor in background
+            tg.start_soon(queue_manager.process_queue)
+
             # Start queue display updater
             tg.start_soon(update_queue_display)
 
@@ -143,5 +156,6 @@ async def _run_with_dashboard(
                 once=once,
             )
 
-            # Cancel background tasks when watcher stops
+            # Stop queue processor and cancel background tasks when watcher stops
+            queue_manager.stop()
             tg.cancel_scope.cancel()
