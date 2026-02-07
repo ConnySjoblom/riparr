@@ -67,6 +67,7 @@ COPY --from=makemkv-builder /usr/local/bin/makemkvcon /usr/local/bin/
 COPY --from=makemkv-builder /usr/local/lib/libmakemkv.so* /usr/local/lib/
 COPY --from=makemkv-builder /usr/local/lib/libdriveio.so* /usr/local/lib/
 COPY --from=makemkv-builder /usr/local/lib/libmmbd.so* /usr/local/lib/
+COPY --from=makemkv-builder /usr/local/share/MakeMKV /usr/local/share/MakeMKV
 
 # Update library cache
 RUN ldconfig
