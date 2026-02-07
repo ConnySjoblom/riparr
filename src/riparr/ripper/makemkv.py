@@ -128,12 +128,27 @@ class MakeMKV:
                 # useful information before failing
 
             disc = finalize_state(state)
-            log.info(
-                "Disc scan complete",
-                name=disc.name,
-                titles=len(disc.titles),
-                disc_type=disc.disc_type.value,
-            )
+
+            # Log warnings if no titles found
+            if len(disc.titles) == 0:
+                # Include MakeMKV messages for debugging
+                if state.messages:
+                    for code, msg in state.messages[-5:]:  # Last 5 messages
+                        log.warning("MakeMKV message", code=code, message=msg)
+                log.warning(
+                    "No titles found on disc",
+                    device=device,
+                    disc_type=disc.disc_type.value,
+                    hint="This may be an audio CD, data disc, or copy-protected disc",
+                )
+            else:
+                log.info(
+                    "Disc scan complete",
+                    name=disc.name,
+                    titles=len(disc.titles),
+                    disc_type=disc.disc_type.value,
+                )
+
             return disc
 
         except FileNotFoundError as e:
