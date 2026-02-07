@@ -161,12 +161,19 @@ class QueueManager:
         return job
 
     async def _lookup_metadata(self, disc: Disc, device: str) -> None:
-        """Look up disc metadata.
+        """Look up disc metadata using multiple methods.
+
+        Tries in order:
+        1. DVD ID → ARM database lookup
+        2. TMDB search by disc name
 
         Args:
             disc: Disc object to update
             device: Device path
         """
+        from riparr.metadata.tmdb import search as tmdb_search
+
+        # Method 1: Try DVD ID → ARM database
         try:
             dvd_id = compute_dvd_id(device)
             disc.dvd_id = dvd_id
@@ -176,7 +183,7 @@ class QueueManager:
             if metadata:
                 disc.metadata = metadata
                 log.info(
-                    "Found metadata",
+                    "Found metadata via ARM",
                     title=metadata.title,
                     year=metadata.year,
                 )
@@ -184,8 +191,35 @@ class QueueManager:
                     self.tracker.add_event(
                         f"Found: [cyan]{metadata.title}[/] ({metadata.year})"
                     )
+                return  # Success, no need to try other methods
         except Exception as e:
-            log.warning("Metadata lookup failed", error=str(e))
+            log.debug("DVD ID lookup failed", error=str(e))
+
+        # Method 2: Try TMDB search by disc name
+        if disc.name:
+            try:
+                # Clean up disc name for search (replace underscores, etc.)
+                search_title = disc.name.replace("_", " ").strip()
+                log.info("Searching TMDB by disc name", title=search_title)
+
+                metadata = await tmdb_search(search_title)
+                if metadata:
+                    disc.metadata = metadata
+                    log.info(
+                        "Found metadata via TMDB",
+                        title=metadata.title,
+                        year=metadata.year,
+                    )
+                    if self.tracker:
+                        self.tracker.add_event(
+                            f"Found: [cyan]{metadata.title}[/] ({metadata.year})"
+                        )
+                    return  # Success
+            except Exception as e:
+                log.debug("TMDB search failed", error=str(e))
+
+        # All methods failed
+        log.warning("All metadata lookup methods failed", disc_name=disc.name)
 
     async def _rip_titles(self, job: Job) -> list[Path]:
         """Rip selected titles from disc.

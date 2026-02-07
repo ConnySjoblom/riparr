@@ -4,6 +4,11 @@ Uses the pydvdid-m library to compute a CRC64 hash of the disc structure,
 which can then be used to look up metadata from the ARM database.
 """
 
+import contextlib
+import os
+import subprocess
+import tempfile
+
 import structlog
 
 log = structlog.get_logger()
@@ -14,6 +19,9 @@ def compute_dvd_id(device_or_path: str) -> str:
 
     The DVD ID is computed from the disc's IFO files structure,
     making it unique to each DVD release.
+
+    If the device is not mounted, this will temporarily mount it
+    to compute the ID.
 
     Args:
         device_or_path: Device path (e.g., /dev/sr0) or mount point
@@ -28,14 +36,21 @@ def compute_dvd_id(device_or_path: str) -> str:
         from pydvdid_m import DvdId
 
         # pydvdid-m expects a mount point, not a device
-        # If given a device, try to find the mount point
+        # If given a device, try to find the mount point or mount temporarily
         mount_point = _get_mount_point(device_or_path)
 
         if mount_point is None:
-            raise RuntimeError(
-                f"Device {device_or_path} is not mounted. "
-                "Mount the disc and try again, or pass the mount point directly."
-            )
+            # Try to mount temporarily
+            with _temporary_mount(device_or_path) as temp_mount:
+                if temp_mount is None:
+                    raise RuntimeError(
+                        f"Could not mount device {device_or_path}. "
+                        "Check permissions and ensure the disc is readable."
+                    )
+                dvd_id = DvdId(temp_mount)
+                crc = dvd_id.compute_crc64()
+                log.info("Computed DVD ID", device=device_or_path, dvd_id=crc)
+                return crc
 
         dvd_id = DvdId(mount_point)
         crc = dvd_id.compute_crc64()
@@ -51,6 +66,74 @@ def compute_dvd_id(device_or_path: str) -> str:
         raise RuntimeError(f"Failed to compute DVD ID: {e}") from e
 
 
+@contextlib.contextmanager
+def _temporary_mount(device: str):
+    """Temporarily mount a device to read its contents.
+
+    Args:
+        device: Device path (e.g., /dev/sr0)
+
+    Yields:
+        Mount point path or None if mounting failed
+    """
+    mount_point = None
+    temp_dir = None
+
+    try:
+        # Create a temporary mount point
+        temp_dir = tempfile.mkdtemp(prefix="riparr_mount_")
+        mount_point = temp_dir
+
+        log.debug("Mounting disc temporarily", device=device, mount_point=mount_point)
+
+        # Mount the device (read-only)
+        result = subprocess.run(
+            ["mount", "-o", "ro", device, mount_point],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if result.returncode != 0:
+            log.warning(
+                "Failed to mount device",
+                device=device,
+                error=result.stderr.strip(),
+            )
+            yield None
+            return
+
+        log.debug("Disc mounted successfully", device=device, mount_point=mount_point)
+        yield mount_point
+
+    except subprocess.TimeoutExpired:
+        log.warning("Mount command timed out", device=device)
+        yield None
+
+    except Exception as e:
+        log.warning("Error mounting device", device=device, error=str(e))
+        yield None
+
+    finally:
+        # Unmount and clean up
+        if mount_point and os.path.ismount(mount_point):
+            try:
+                subprocess.run(
+                    ["umount", mount_point],
+                    capture_output=True,
+                    timeout=30,
+                )
+                log.debug("Disc unmounted", mount_point=mount_point)
+            except Exception as e:
+                log.warning("Failed to unmount", mount_point=mount_point, error=str(e))
+
+        if temp_dir and os.path.exists(temp_dir):
+            try:
+                os.rmdir(temp_dir)
+            except OSError:
+                pass
+
+
 def _get_mount_point(device: str) -> str | None:
     """Get the mount point for a device.
 
@@ -60,7 +143,6 @@ def _get_mount_point(device: str) -> str | None:
     Returns:
         Mount point path or None if not mounted
     """
-    import os
     from pathlib import Path
 
     # If it's already a directory, assume it's a mount point
