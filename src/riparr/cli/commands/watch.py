@@ -129,6 +129,7 @@ async def _run_with_dashboard(
         while True:
             await anyio.sleep(2)
             jobs = queue_manager.markers.list_jobs()
+            # Filter out completed items - they're not really "queued"
             items = [
                 QueuedItem(
                     name=j.name,
@@ -137,6 +138,7 @@ async def _run_with_dashboard(
                     created_at=j.created_at,
                 )
                 for j in jobs
+                if j.status != "complete"
             ]
             tracker.update_queue(items)
 
